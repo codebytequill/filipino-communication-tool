@@ -1,0 +1,38 @@
+{
+  "name": "filipino-communication-tool",
+  "version": "1.0.0",
+  "description": "A web-based tool to help bridge communication gaps between generations in Filipino-American families",
+  "main": "index.html",
+  "keywords": [
+    "filipino",
+    "communication",
+    "family",
+    "cultural-bridge",
+    "accessibility",
+    "dementia",
+    "autism",
+    "hearing-assistance",
+    "cross-cultural",
+    "intergenerational"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "homepage": "https://yourusername.github.io/filipino-communication-tool",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/filipino-communication-tool.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/filipino-communication-tool/issues"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "scripts": {
+    "start": "Open index.html in your browser"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
