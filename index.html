@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,253 +9,272 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/lucide.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+    </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState } = React;
-        const { MessageSquare, Clock, Eye, FileText, Lightbulb } = lucide;
+      // Adaptation functions
+      const adaptToDirectRespectful = (message) => {
+        const patterns = [
+          { from: /can you please/gi, to: 'Tatay, please' },
+          { from: /would you mind/gi, to: 'Tatay, please' },
+          { from: /could you/gi, to: 'Tatay, please' },
+          { from: /when you have time/gi, to: 'now' },
+          { from: /if it's not too much trouble/gi, to: '' },
+          { from: /i would appreciate/gi, to: 'please' }
+        ];
+        
+        let adapted = message;
+        patterns.forEach(pattern => {
+          adapted = adapted.replace(pattern.from, pattern.to);
+        });
+        
+        if (!adapted.toLowerCase().includes('po') && !adapted.toLowerCase().includes('salamat')) {
+          adapted += ' po. Salamat.';
+        }
+        
+        return {
+          adapted: adapted,
+          context: 'Uses respectful Filipino terms and direct requests'
+        };
+      };
 
-        const CommunicationTool = () => {
-            const [inputMessage, setInputMessage] = useState('');
-            const [adaptedMessages, setAdaptedMessages] = useState([]);
-            const [selectedStyle, setSelectedStyle] = useState('all');
+      const adaptToVisualSchedule = (message) => {
+        const timePattern = /(\d{1,2}:\d{2}|\d{1,2}\s?(am|pm|AM|PM))/g;
+        const times = message.match(timePattern);
+        
+        let adapted = message;
+        if (times) {
+          adapted = `Schedule:\n1. ${adapted.replace(/until|after|before/gi, '→')}`;
+        } else {
+          adapted = `Steps:\n1. ${adapted}\n2. Check when done\n3. Next task`;
+        }
+        
+        return {
+          adapted: adapted,
+          context: 'Breaks down into clear steps with visual cues'
+        };
+      };
 
-            const adaptMessage = (message) => {
-                if (!message.trim()) return [];
+      const adaptToSimpleCommands = (message) => {
+        const sentences = message.split(/[.!?]+/).filter(s => s.trim());
+        const simplified = sentences.map(sentence => {
+          return sentence
+            .replace(/can you please|would you mind|could you/gi, 'Please')
+            .replace(/when you have time|if possible|when convenient/gi, 'now')
+            .replace(/i would appreciate it if/gi, 'Please')
+            .trim();
+        });
+        
+        return {
+          adapted: simplified.join('.\n') + '.',
+          context: 'One clear command per line'
+        };
+      };
 
-                const adaptations = [
-                    {
-                        type: 'Direct & Respectful',
-                        icon: React.createElement(MessageSquare, { className: "w-4 h-4" }),
-                        color: 'bg-blue-50 border-blue-200',
-                        message: convertToDirectRespectful(message),
-                        context: 'Best for: Daily requests, routine changes',
-                        timing: 'Good timing: After meals, during calm moments'
-                    },
-                    {
-                        type: 'Visual Schedule Format',
-                        icon: React.createElement(Clock, { className: "w-4 h-4" }),
-                        color: 'bg-green-50 border-green-200',
-                        message: convertToScheduleFormat(message),
-                        context: 'Best for: Time-based requests, routine planning',
-                        timing: 'Good timing: Morning planning, evening prep'
-                    },
-                    {
-                        type: 'Simple Commands',
-                        icon: React.createElement(Eye, { className: "w-4 h-4" }),
-                        color: 'bg-purple-50 border-purple-200',
-                        message: convertToSimpleCommands(message),
-                        context: 'Best for: Immediate actions, safety concerns',
-                        timing: 'Good timing: When attention is focused'
-                    },
-                    {
-                        type: 'Whiteboard Format',
-                        icon: React.createElement(FileText, { className: "w-4 h-4" }),
-                        color: 'bg-orange-50 border-orange-200',
-                        message: convertToWhiteboardFormat(message),
-                        context: 'Best for: Complex instructions, reminders',
-                        timing: 'Good timing: Leave up for reference'
-                    }
-                ];
+      const adaptToWhiteboard = (message) => {
+        const adapted = message
+          .replace(/can you please|would you mind|could you/gi, '→ PLEASE')
+          .replace(/kitchen/gi, '🍳 KITCHEN')
+          .replace(/clean/gi, '🧹 CLEAN')
+          .replace(/lights/gi, '💡 LIGHTS')
+          .replace(/time/gi, '⏰ TIME')
+          .toUpperCase();
+        
+        return {
+          adapted: `📝 MESSAGE FOR TATAY:\n\n${adapted}\n\n✅ SALAMAT PO!`,
+          context: 'Large text with icons for easy reading'
+        };
+      };
 
-                return selectedStyle === 'all' ? adaptations : adaptations.filter(a => a.type.toLowerCase().includes(selectedStyle));
-            };
+      const CommunicationTool = () => {
+        const [inputMessage, setInputMessage] = React.useState('');
+        const [adaptedVersions, setAdaptedVersions] = React.useState(null);
 
-            const convertToDirectRespectful = (message) => {
-                let adapted = message;
-                
-                adapted = adapted.replace(/can you please/gi, 'Please');
-                adapted = adapted.replace(/would you mind/gi, 'Please');
-                adapted = adapted.replace(/could you/gi, 'Please');
-                
-                if (!adapted.toLowerCase().includes('po') && !adapted.toLowerCase().includes('tatay')) {
-                    adapted = 'Tatay, ' + adapted;
-                }
-                
-                if (!adapted.toLowerCase().includes('salamat')) {
-                    adapted += ' Salamat po.';
-                }
-                
-                return adapted;
-            };
+        const adaptMessage = () => {
+          if (!inputMessage.trim()) return;
 
-            const convertToScheduleFormat = (message) => {
-                let adapted = message;
-                
-                adapted = adapted.replace(/later/gi, 'after 7:00 PM');
-                adapted = adapted.replace(/in the evening/gi, 'from 8:00-9:00 PM');
-                adapted = adapted.replace(/when I'm done/gi, 'after I finish (30 minutes)');
-                
-                const lines = adapted.split('.').filter(line => line.trim());
-                return lines.map((line, index) => `${index + 1}. ${line.trim()}`).join('\n');
-            };
+          const adaptations = {
+            direct: adaptToDirectRespectful(inputMessage),
+            visual: adaptToVisualSchedule(inputMessage),
+            simple: adaptToSimpleCommands(inputMessage),
+            whiteboard: adaptToWhiteboard(inputMessage)
+          };
 
-            const convertToSimpleCommands = (message) => {
-                let adapted = message;
-                
-                const sentences = adapted.split(/[,;]|and(?!\s+the)/);
-                const commands = sentences.map(sentence => {
-                    let cmd = sentence.trim();
-                    cmd = cmd.replace(/can you please|would you mind|could you/gi, '');
-                    cmd = cmd.replace(/^\s*to\s+/gi, '');
-                    return cmd.charAt(0).toUpperCase() + cmd.slice(1);
-                });
-                
-                return commands.filter(cmd => cmd.length > 3).join('.\n') + '.';
-            };
-
-            const convertToWhiteboardFormat = (message) => {
-                let adapted = message;
-                
-                adapted = adapted.toUpperCase();
-                adapted = adapted.replace(/CAN YOU PLEASE|WOULD YOU MIND|COULD YOU/gi, '→');
-                
-                const sections = adapted.split('.');
-                return sections.map(section => {
-                    if (section.trim()) {
-                        return `📋 ${section.trim()}`;
-                    }
-                    return '';
-                }).filter(s => s).join('\n\n');
-            };
-
-            const handleSubmit = () => {
-                const adaptations = adaptMessage(inputMessage);
-                setAdaptedMessages(adaptations);
-            };
-
-            const culturalTips = [
-                "Use 'Tatay' to show respect and get attention",
-                "Add 'po' for politeness in requests",
-                "End with 'Salamat po' to show gratitude",
-                "Be specific about times rather than vague",
-                "Break complex requests into simple steps",
-                "Use visual cues when possible",
-                "Avoid American idioms and indirect language"
-            ];
-
-            return React.createElement('div', { className: "max-w-4xl mx-auto p-6 bg-white" },
-                React.createElement('div', { className: "mb-8" },
-                    React.createElement('h1', { className: "text-3xl font-bold text-gray-800 mb-2" },
-                        'Filipino Family Communication Adapter'
-                    ),
-                    React.createElement('p', { className: "text-gray-600" },
-                        'Transform your messages for better understanding with your father'
-                    )
-                ),
-
-                React.createElement('div', { className: "grid grid-cols-1 lg:grid-cols-3 gap-6" },
-                    React.createElement('div', { className: "lg:col-span-2" },
-                        React.createElement('div', { className: "mb-6" },
-                            React.createElement('label', { className: "block text-sm font-medium text-gray-700 mb-2" },
-                                'Your Original Message:'
-                            ),
-                            React.createElement('textarea', {
-                                value: inputMessage,
-                                onChange: (e) => setInputMessage(e.target.value),
-                                placeholder: "Example: Can you please wait to clean the kitchen until I am done preparing my meals?",
-                                className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-                                rows: 4
-                            }),
-                            
-                            React.createElement('div', { className: "flex gap-4 mt-4" },
-                                React.createElement('select', {
-                                    value: selectedStyle,
-                                    onChange: (e) => setSelectedStyle(e.target.value),
-                                    className: "p-2 border border-gray-300 rounded-lg"
-                                },
-                                    React.createElement('option', { value: "all" }, 'All Styles'),
-                                    React.createElement('option', { value: "direct" }, 'Direct & Respectful'),
-                                    React.createElement('option', { value: "schedule" }, 'Schedule Format'),
-                                    React.createElement('option', { value: "simple" }, 'Simple Commands'),
-                                    React.createElement('option', { value: "whiteboard" }, 'Whiteboard Format')
-                                ),
-                                
-                                React.createElement('button', {
-                                    onClick: handleSubmit,
-                                    className: "px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                }, 'Adapt Message')
-                            )
-                        ),
-
-                        adaptedMessages.length > 0 && React.createElement('div', { className: "space-y-4" },
-                            React.createElement('h2', { className: "text-xl font-semibold text-gray-800" }, 'Adapted Messages:'),
-                            ...adaptedMessages.map((adaptation, index) =>
-                                React.createElement('div', { key: index, className: `p-4 rounded-lg border-2 ${adaptation.color}` },
-                                    React.createElement('div', { className: "flex items-center gap-2 mb-2" },
-                                        adaptation.icon,
-                                        React.createElement('h3', { className: "font-semibold text-gray-800" }, adaptation.type)
-                                    ),
-                                    
-                                    React.createElement('div', { className: "bg-white p-3 rounded border mb-3" },
-                                        React.createElement('pre', { className: "whitespace-pre-wrap font-mono text-sm" },
-                                            adaptation.message
-                                        )
-                                    ),
-                                    
-                                    React.createElement('div', { className: "text-sm text-gray-600" },
-                                        React.createElement('p', { className: "font-medium" }, adaptation.context),
-                                        React.createElement('p', { className: "italic" }, adaptation.timing)
-                                    )
-                                )
-                            )
-                        )
-                    ),
-
-                    React.createElement('div', { className: "space-y-6" },
-                        React.createElement('div', { className: "bg-yellow-50 border border-yellow-200 rounded-lg p-4" },
-                            React.createElement('div', { className: "flex items-center gap-2 mb-3" },
-                                React.createElement(Lightbulb, { className: "w-5 h-5 text-yellow-600" }),
-                                React.createElement('h3', { className: "font-semibold text-yellow-800" }, 'Cultural Communication Tips')
-                            ),
-                            React.createElement('ul', { className: "space-y-2 text-sm text-yellow-700" },
-                                ...culturalTips.map((tip, index) =>
-                                    React.createElement('li', { key: index, className: "flex items-start gap-2" },
-                                        React.createElement('span', { className: "text-yellow-500 mt-1" }, '•'),
-                                        tip
-                                    )
-                                )
-                            )
-                        ),
-
-                        React.createElement('div', { className: "bg-green-50 border border-green-200 rounded-lg p-4" },
-                            React.createElement('h3', { className: "font-semibold text-green-800 mb-3" }, 'Best Communication Times'),
-                            React.createElement('div', { className: "space-y-2 text-sm text-green-700" },
-                                React.createElement('div', null,
-                                    React.createElement('strong', null, 'Morning (8-10 AM):'), ' Planning, schedules'
-                                ),
-                                React.createElement('div', null,
-                                    React.createElement('strong', null, 'After meals:'), ' Requests, changes'
-                                ),
-                                React.createElement('div', null,
-                                    React.createElement('strong', null, 'Calm moments:'), ' Complex topics'
-                                ),
-                                React.createElement('div', null,
-                                    React.createElement('strong', null, 'Avoid:'), ' When he\'s focused on routines'
-                                )
-                            )
-                        ),
-
-                        React.createElement('div', { className: "bg-blue-50 border border-blue-200 rounded-lg p-4" },
-                            React.createElement('h3', { className: "font-semibold text-blue-800 mb-3" }, 'Visual Presentation Tips'),
-                            React.createElement('ul', { className: "space-y-1 text-sm text-blue-700" },
-                                React.createElement('li', null, '• Use large, clear writing'),
-                                React.createElement('li', null, '• Leave whiteboard messages up'),
-                                React.createElement('li', null, '• Use simple drawings/icons'),
-                                React.createElement('li', null, '• Highlight key words'),
-                                React.createElement('li', null, '• Number steps clearly')
-                            )
-                        )
-                    )
-                )
-            );
+          setAdaptedVersions(adaptations);
         };
 
-        ReactDOM.render(React.createElement(CommunicationTool), document.getElementById('root'));
+        return React.createElement('div', { className: 'min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6' }, 
+          React.createElement('div', { className: 'max-w-4xl mx-auto' }, [
+            React.createElement('div', { 
+              key: 'header',
+              className: 'text-center mb-8' 
+            }, [
+              React.createElement('h1', { 
+                key: 'title',
+                className: 'text-4xl font-bold text-indigo-900 mb-4' 
+              }, 'Filipino Family Communication Adapter'),
+              React.createElement('p', { 
+                key: 'subtitle',
+                className: 'text-lg text-indigo-700' 
+              }, 'Transform your messages for better family understanding')
+            ]),
+
+            React.createElement('div', { 
+              key: 'input-section',
+              className: 'bg-white rounded-lg shadow-lg p-6 mb-6' 
+            }, [
+              React.createElement('h2', { 
+                key: 'input-title',
+                className: 'text-2xl font-semibold text-gray-800 mb-4' 
+              }, 'Your Message'),
+              React.createElement('textarea', {
+                key: 'textarea',
+                className: 'w-full p-4 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent',
+                rows: 4,
+                placeholder: 'Enter your message here (e.g., "Can you please wait to clean the kitchen until I am done preparing my meals?")',
+                value: inputMessage,
+                onChange: (e) => setInputMessage(e.target.value)
+              }),
+              React.createElement('button', {
+                key: 'adapt-button',
+                className: 'mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors',
+                onClick: adaptMessage
+              }, 'Adapt Message')
+            ]),
+
+            adaptedVersions && React.createElement('div', { 
+              key: 'results',
+              className: 'grid grid-cols-1 md:grid-cols-2 gap-6' 
+            }, [
+              React.createElement('div', { 
+                key: 'direct',
+                className: 'bg-white rounded-lg shadow-lg p-6' 
+              }, [
+                React.createElement('h3', { 
+                  key: 'direct-title',
+                  className: 'text-xl font-semibold text-green-800 mb-3 flex items-center' 
+                }, [
+                  React.createElement('span', { 
+                    key: 'direct-icon',
+                    className: 'mr-2' 
+                  }, '🤝'),
+                  'Direct & Respectful'
+                ]),
+                React.createElement('div', { 
+                  key: 'direct-content',
+                  className: 'bg-green-50 p-4 rounded-lg' 
+                }, [
+                  React.createElement('p', { 
+                    key: 'direct-text',
+                    className: 'text-green-900 font-medium' 
+                  }, adaptedVersions.direct.adapted),
+                  React.createElement('p', { 
+                    key: 'direct-context',
+                    className: 'text-green-700 text-sm mt-2' 
+                  }, adaptedVersions.direct.context)
+                ])
+              ]),
+
+              React.createElement('div', { 
+                key: 'visual',
+                className: 'bg-white rounded-lg shadow-lg p-6' 
+              }, [
+                React.createElement('h3', { 
+                  key: 'visual-title',
+                  className: 'text-xl font-semibold text-blue-800 mb-3 flex items-center' 
+                }, [
+                  React.createElement('span', { 
+                    key: 'visual-icon',
+                    className: 'mr-2' 
+                  }, '📅'),
+                  'Visual Schedule Format'
+                ]),
+                React.createElement('div', { 
+                  key: 'visual-content',
+                  className: 'bg-blue-50 p-4 rounded-lg' 
+                }, [
+                  React.createElement('p', { 
+                    key: 'visual-text',
+                    className: 'text-blue-900 font-medium whitespace-pre-line' 
+                  }, adaptedVersions.visual.adapted),
+                  React.createElement('p', { 
+                    key: 'visual-context',
+                    className: 'text-blue-700 text-sm mt-2' 
+                  }, adaptedVersions.visual.context)
+                ])
+              ]),
+
+              React.createElement('div', { 
+                key: 'simple',
+                className: 'bg-white rounded-lg shadow-lg p-6' 
+              }, [
+                React.createElement('h3', { 
+                  key: 'simple-title',
+                  className: 'text-xl font-semibold text-purple-800 mb-3 flex items-center' 
+                }, [
+                  React.createElement('span', { 
+                    key: 'simple-icon',
+                    className: 'mr-2' 
+                  }, '⚡'),
+                  'Simple Commands'
+                ]),
+                React.createElement('div', { 
+                  key: 'simple-content',
+                  className: 'bg-purple-50 p-4 rounded-lg' 
+                }, [
+                  React.createElement('p', { 
+                    key: 'simple-text',
+                    className: 'text-purple-900 font-medium whitespace-pre-line' 
+                  }, adaptedVersions.simple.adapted),
+                  React.createElement('p', { 
+                    key: 'simple-context',
+                    className: 'text-purple-700 text-sm mt-2' 
+                  }, adaptedVersions.simple.context)
+                ])
+              ]),
+
+              React.createElement('div', { 
+                key: 'whiteboard',
+                className: 'bg-white rounded-lg shadow-lg p-6' 
+              }, [
+                React.createElement('h3', { 
+                  key: 'whiteboard-title',
+                  className: 'text-xl font-semibold text-orange-800 mb-3 flex items-center' 
+                }, [
+                  React.createElement('span', { 
+                    key: 'whiteboard-icon',
+                    className: 'mr-2' 
+                  }, '📝'),
+                  'Whiteboard Format'
+                ]),
+                React.createElement('div', { 
+                  key: 'whiteboard-content',
+                  className: 'bg-orange-50 p-4 rounded-lg font-mono' 
+                }, [
+                  React.createElement('pre', { 
+                    key: 'whiteboard-text',
+                    className: 'text-orange-900 whitespace-pre-wrap' 
+                  }, adaptedVersions.whiteboard.adapted),
+                  React.createElement('p', { 
+                    key: 'whiteboard-context',
+                    className: 'text-orange-700 text-sm mt-2 font-sans' 
+                  }, adaptedVersions.whiteboard.context)
+                ])
+              ])
+            ])
+          ])
+        );
+      };
+
+      // Render the app
+      ReactDOM.render(React.createElement(CommunicationTool), document.getElementById('root'));
     </script>
 </body>
 </html>
