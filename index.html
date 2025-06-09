@@ -14,7 +14,6 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // Wait until the entire page is loaded before running the React code
         document.addEventListener('DOMContentLoaded', function() {
             const { useState } = React;
 
@@ -25,100 +24,47 @@
 
                 const adaptMessage = (message) => {
                     if (!message.trim()) return [];
-
                     const adaptations = [
-                        {
-                            type: 'Direct & Respectful',
-                            icon: lucide.createElement(lucide.MessageSquare, { className: "w-4 h-4" }),
-                            color: 'bg-blue-50 border-blue-200',
-                            message: convertToDirectRespectful(message),
-                            context: 'Best for: Daily requests, routine changes',
-                            timing: 'Good timing: After meals, during calm moments'
-                        },
-                        {
-                            type: 'Visual Schedule Format',
-                            icon: lucide.createElement(lucide.Clock, { className: "w-4 h-4" }),
-                            color: 'bg-green-50 border-green-200',
-                            message: convertToScheduleFormat(message),
-                            context: 'Best for: Time-based requests, routine planning',
-                            timing: 'Good timing: Morning planning, evening prep'
-                        },
-                        {
-                            type: 'Simple Commands',
-                            icon: lucide.createElement(lucide.Eye, { className: "w-4 h-4" }),
-                            color: 'bg-purple-50 border-purple-200',
-                            message: convertToSimpleCommands(message),
-                            context: 'Best for: Immediate actions, safety concerns',
-                            timing: 'Good timing: When attention is focused'
-                        },
-                        {
-                            type: 'Whiteboard Format',
-                            icon: lucide.createElement(lucide.FileText, { className: "w-4 h-4" }),
-                            color: 'bg-orange-50 border-orange-200',
-                            message: convertToWhiteboardFormat(message),
-                            context: 'Best for: Complex instructions, reminders',
-                            timing: 'Good timing: Leave up for reference'
-                        }
+                        { type: 'Direct & Respectful', icon: lucide.createElement(lucide.MessageSquare, { className: "w-4 h-4" }), color: 'bg-blue-50 border-blue-200', message: convertToDirectRespectful(message), context: 'Best for: Daily requests, routine changes', timing: 'Good timing: After meals, during calm moments' },
+                        { type: 'Visual Schedule Format', icon: lucide.createElement(lucide.Clock, { className: "w-4 h-4" }), color: 'bg-green-50 border-green-200', message: convertToScheduleFormat(message), context: 'Best for: Time-based requests, routine planning', timing: 'Good timing: Morning planning, evening prep' },
+                        { type: 'Simple Commands', icon: lucide.createElement(lucide.Eye, { className: "w-4 h-4" }), color: 'bg-purple-50 border-purple-200', message: convertToSimpleCommands(message), context: 'Best for: Immediate actions, safety concerns', timing: 'Good timing: When attention is focused' },
+                        { type: 'Whiteboard Format', icon: lucide.createElement(lucide.FileText, { className: "w-4 h-4" }), color: 'bg-orange-50 border-orange-200', message: convertToWhiteboardFormat(message), context: 'Best for: Complex instructions, reminders', timing: 'Good timing: Leave up for reference' }
                     ];
-
-                    if (selectedStyle === 'all') {
-                        return adaptations;
-                    }
+                    if (selectedStyle === 'all') return adaptations;
                     return adaptations.filter(a => a.type.toLowerCase().includes(selectedStyle));
                 };
 
-                // --- Helper functions remain the same ---
-                const convertToDirectRespectful = (message) => {
-                    let adapted = message.replace(/can you please|would you mind|could you/gi, 'Please');
+                const convertToDirectRespectful = (msg) => {
+                    let adapted = msg.replace(/can you please|would you mind|could you/gi, 'Please');
                     if (!adapted.toLowerCase().includes('po') && !adapted.toLowerCase().includes('tatay')) adapted = 'Tatay, ' + adapted;
                     if (!adapted.toLowerCase().includes('salamat')) adapted += ' Salamat po.';
                     return adapted;
                 };
-                const convertToScheduleFormat = (message) => {
-                    let adapted = message.replace(/later/gi, 'after 7:00 PM').replace(/in the evening/gi, 'from 8:00-9:00 PM').replace(/when I'm done/gi, 'after I finish (30 minutes)');
-                    const lines = adapted.split('.').filter(line => line.trim());
-                    return lines.map((line, index) => `${index + 1}. ${line.trim()}`).join('\n');
+                const convertToScheduleFormat = (msg) => {
+                    let adapted = msg.replace(/later/gi, 'after 7:00 PM').replace(/in the evening/gi, 'from 8:00-9:00 PM').replace(/when I'm done/gi, 'after I finish (30 minutes)');
+                    return adapted.split('.').filter(l => l.trim()).map((l, i) => `${i + 1}. ${l.trim()}`).join('\n');
                 };
-                const convertToSimpleCommands = (message) => {
-                    const sentences = message.split(/[,;]|and(?!\s+the)/);
-                    const commands = sentences.map(sentence => {
-                        let cmd = sentence.trim().replace(/can you please|would you mind|could you/gi, '').replace(/^\s*to\s+/gi, '');
-                        return cmd.charAt(0).toUpperCase() + cmd.slice(1);
-                    });
-                    return commands.filter(cmd => cmd.length > 3).join('.\n') + '.';
+                const convertToSimpleCommands = (msg) => {
+                    const sentences = msg.split(/[,;]|and(?!\s+the)/);
+                    return sentences.map(s => s.trim().replace(/can you please|would you mind|could you/gi, '').replace(/^\s*to\s+/gi, '')).map(c => c.charAt(0).toUpperCase() + c.slice(1)).filter(c => c.length > 3).join('.\n') + '.';
                 };
-                const convertToWhiteboardFormat = (message) => {
-                    let adapted = message.toUpperCase().replace(/CAN YOU PLEASE|WOULD YOU MIND|COULD YOU/gi, '→');
-                    const sections = adapted.split('.');
-                    return sections.map(section => section.trim() ? `📋 ${section.trim()}` : '').filter(s => s).join('\n\n');
+                const convertToWhiteboardFormat = (msg) => {
+                    return msg.toUpperCase().replace(/CAN YOU PLEASE|WOULD YOU MIND|COULD YOU/gi, '→').split('.').map(s => s.trim() ? `📋 ${s.trim()}` : '').filter(s => s).join('\n\n');
                 };
 
+                const handleSubmit = () => setAdaptedMessages(adaptMessage(inputMessage));
+                const culturalTips = ["Use 'Tatay' to show respect and get attention", "Add 'po' for politeness in requests", "End with 'Salamat po' to show gratitude", "Be specific about times rather than vague", "Break complex requests into simple steps", "Use visual cues when possible", "Avoid American idioms and indirect language"];
 
-                const handleSubmit = () => {
-                    setAdaptedMessages(adaptMessage(inputMessage));
-                };
-
-                const culturalTips = [
-                    "Use 'Tatay' to show respect and get attention", "Add 'po' for politeness in requests", "End with 'Salamat po' to show gratitude", "Be specific about times rather than vague", "Break complex requests into simple steps", "Use visual cues when possible", "Avoid American idioms and indirect language"
-                ];
-
-                return React.createElement('div', { className: "max-w-4xl mx-auto p-4 sm:p-6 bg-white" },
+                return React.createElement('div', { className: "max-w-4xl mx-auto p-4 sm:p-6 bg-white shadow-md rounded-lg" },
                     React.createElement('div', { className: "mb-8 text-center" },
                         React.createElement('h1', { className: "text-2xl sm:text-3xl font-bold text-gray-800 mb-2" }, 'Filipino Family Communication Adapter'),
                         React.createElement('p', { className: "text-gray-600" }, 'Transform your messages for better understanding with your father')
                     ),
-                    React.createElement('div', { className: "grid grid-cols-1 lg:grid-cols-3 gap-6" },
+                    React.createElement('div', { className: "grid grid-cols-1 lg:grid-cols-3 gap-8" },
                         React.createElement('div', { className: "lg:col-span-2" },
                             React.createElement('div', { className: "mb-6" },
                                 React.createElement('label', { htmlFor: "message-input", className: "block text-sm font-medium text-gray-700 mb-2" }, 'Your Original Message:'),
-                                React.createElement('textarea', {
-                                    id: "message-input",
-                                    value: inputMessage,
-                                    onChange: (e) => setInputMessage(e.target.value),
-                                    placeholder: "Example: Can you please wait to clean the kitchen until I am done preparing my meals?",
-                                    className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-                                    rows: 4
-                                }),
+                                React.createElement('textarea', { id: "message-input", value: inputMessage, onChange: (e) => setInputMessage(e.target.value), placeholder: "Example: Can you please wait to clean the kitchen until I am done preparing my meals?", className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent", rows: 4 }),
                                 React.createElement('div', { className: "flex flex-wrap gap-4 mt-4" },
                                     React.createElement('select', { value: selectedStyle, onChange: (e) => setSelectedStyle(e.target.value), className: "p-2 border border-gray-300 rounded-lg" },
                                         React.createElement('option', { value: "all" }, 'All Styles'),
@@ -132,33 +78,17 @@
                             ),
                             adaptedMessages.length > 0 && React.createElement('div', { className: "space-y-4" },
                                 React.createElement('h2', { className: "text-xl font-semibold text-gray-800" }, 'Adapted Messages:'),
-                                adaptedMessages.map((adaptation, index) =>
-                                    React.createElement('div', { key: index, className: `p-4 rounded-lg border-2 ${adaptation.color}` },
-                                        React.createElement('div', { className: "flex items-center gap-2 mb-2" },
-                                            adaptation.icon,
-                                            React.createElement('h3', { className: "font-semibold text-gray-800" }, adaptation.type)
-                                        ),
-                                        React.createElement('div', { className: "bg-white p-3 rounded border mb-3" },
-                                            React.createElement('pre', { className: "whitespace-pre-wrap font-sans text-sm" }, adaptation.message)
-                                        ),
-                                        React.createElement('div', { className: "text-sm text-gray-600" },
-                                            React.createElement('p', { className: "font-medium" }, adaptation.context),
-                                            React.createElement('p', { className: "italic" }, adaptation.timing)
-                                        )
-                                    )
-                                )
+                                adaptedMessages.map((adaptation, index) => React.createElement('div', { key: index, className: `p-4 rounded-lg border-2 ${adaptation.color}` },
+                                    React.createElement('div', { className: "flex items-center gap-2 mb-2" }, adaptation.icon, React.createElement('h3', { className: "font-semibold text-gray-800" }, adaptation.type)),
+                                    React.createElement('div', { className: "bg-white p-3 rounded border mb-3" }, React.createElement('pre', { className: "whitespace-pre-wrap font-sans text-sm" }, adaptation.message)),
+                                    React.createElement('div', { className: "text-sm text-gray-600" }, React.createElement('p', { className: "font-medium" }, adaptation.context), React.createElement('p', { className: "italic" }, adaptation.timing))
+                                ))
                             )
                         ),
                         React.createElement('div', { className: "space-y-6" },
                             React.createElement('div', { className: "bg-yellow-50 border border-yellow-200 rounded-lg p-4" },
-                                React.createElement('div', { className: "flex items-center gap-2 mb-3" },
-                                    lucide.createElement(lucide.Lightbulb, { className: "w-5 h-5 text-yellow-600" }),
-                                    React.createElement('h3', { className: "font-semibold text-yellow-800" }, 'Cultural Communication Tips')
-                                ),
-                                // CORRECTED USAGE OF .map():
-                                React.createElement('ul', { className: "space-y-2 text-sm text-yellow-700 list-disc list-inside" },
-                                    culturalTips.map((tip, index) => React.createElement('li', { key: index }, tip))
-                                )
+                                React.createElement('div', { className: "flex items-center gap-2 mb-3" }, lucide.createElement(lucide.Lightbulb, { className: "w-5 h-5 text-yellow-600" }), React.createElement('h3', { className: "font-semibold text-yellow-800" }, 'Cultural Communication Tips')),
+                                React.createElement('ul', { className: "space-y-2 text-sm text-yellow-700 list-disc list-inside" }, culturalTips.map((tip, index) => React.createElement('li', { key: index }, tip)))
                             ),
                             React.createElement('div', { className: "bg-green-50 border border-green-200 rounded-lg p-4" },
                                 React.createElement('h3', { className: "font-semibold text-green-800 mb-3" }, 'Best Communication Times'),
@@ -172,18 +102,13 @@
                             React.createElement('div', { className: "bg-blue-50 border border-blue-200 rounded-lg p-4" },
                                 React.createElement('h3', { className: "font-semibold text-blue-800 mb-3" }, 'Visual Presentation Tips'),
                                 React.createElement('ul', { className: "space-y-1 text-sm text-blue-700 list-disc list-inside" },
-                                    React.createElement('li', null, 'Use large, clear writing'),
-                                    React.createElement('li', null, 'Leave whiteboard messages up'),
-                                    React.createElement('li', null, 'Use simple drawings/icons'),
-                                    React.createElement('li', null, 'Highlight key words'),
-                                    React.createElement('li', null, 'Number steps clearly')
+                                    React.createElement('li', null, 'Use large, clear writing'), React.createElement('li', null, 'Leave whiteboard messages up'), React.createElement('li', null, 'Use simple drawings/icons'), React.createElement('li', null, 'Highlight key words'), React.createElement('li', null, 'Number steps clearly')
                                 )
                             )
                         )
                     )
                 );
             };
-
             const container = document.getElementById('root');
             const root = ReactDOM.createRoot(container);
             root.render(React.createElement(CommunicationTool));
