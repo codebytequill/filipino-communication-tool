@@ -3,37 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Filipino Family Communication Adapter</title>
+    <title>Filipino Communication Tool</title>
+    
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-slate-900">
+    
     <div id="root"></div>
 
     <script type="text/babel">
-        document.addEventListener('DOMContentLoaded', function() {
-            const { useState } = React;
+        const { useState, useEffect } = React;
 
-            const CommunicationTool = () => {
-                const [inputMessage, setInputMessage] = useState('');
-                const [adaptedMessages, setAdaptedMessages] = useState([]);
-                const [selectedStyle, setSelectedStyle] = useState('all');
+        // This is the main component for your application
+        const App = () => {
+            const [inputMessage, setInputMessage] = useState('');
+            const [adaptedMessages, setAdaptedMessages] = useState([]);
 
-                const adaptMessage = (message) => {
-                    if (!message.trim()) return [];
-                    const adaptations = [
-                        { type: 'Direct & Respectful', icon: lucide.createElement(lucide.MessageSquare, { className: "w-4 h-4" }), color: 'bg-blue-50 border-blue-200', message: convertToDirectRespectful(message), context: 'Best for: Daily requests, routine changes', timing: 'Good timing: After meals, during calm moments' },
-                        { type: 'Visual Schedule Format', icon: lucide.createElement(lucide.Clock, { className: "w-4 h-4" }), color: 'bg-green-50 border-green-200', message: convertToScheduleFormat(message), context: 'Best for: Time-based requests, routine planning', timing: 'Good timing: Morning planning, evening prep' },
-                        { type: 'Simple Commands', icon: lucide.createElement(lucide.Eye, { className: "w-4 h-4" }), color: 'bg-purple-50 border-purple-200', message: convertToSimpleCommands(message), context: 'Best for: Immediate actions, safety concerns', timing: 'Good timing: When attention is focused' },
-                        { type: 'Whiteboard Format', icon: lucide.createElement(lucide.FileText, { className: "w-4 h-4" }), color: 'bg-orange-50 border-orange-200', message: convertToWhiteboardFormat(message), context: 'Best for: Complex instructions, reminders', timing: 'Good timing: Leave up for reference' }
-                    ];
-                    if (selectedStyle === 'all') return adaptations;
-                    return adaptations.filter(a => a.type.toLowerCase().includes(selectedStyle));
-                };
+            // 2. FIXED: This 'effect' runs after the app draws, ensuring icons are properly created.
+            useEffect(() => {
+                lucide.createIcons();
+            }, [adaptedMessages]); // Re-run this logic whenever new messages are displayed
 
+            // This function contains the logic to transform the user's message
+            const adaptMessage = (message) => {
+                if (!message.trim()) return [];
+                
+                // Helper functions to convert the message into different styles
                 const convertToDirectRespectful = (msg) => {
                     let adapted = msg.replace(/can you please|would you mind|could you/gi, 'Please');
                     if (!adapted.toLowerCase().includes('po') && !adapted.toLowerCase().includes('tatay')) adapted = 'Tatay, ' + adapted;
@@ -52,67 +51,86 @@
                     return msg.toUpperCase().replace(/CAN YOU PLEASE|WOULD YOU MIND|COULD YOU/gi, '→').split('.').map(s => s.trim() ? `📋 ${s.trim()}` : '').filter(s => s).join('\n\n');
                 };
 
-                const handleSubmit = () => setAdaptedMessages(adaptMessage(inputMessage));
-                const culturalTips = ["Use 'Tatay' to show respect and get attention", "Add 'po' for politeness in requests", "End with 'Salamat po' to show gratitude", "Be specific about times rather than vague", "Break complex requests into simple steps", "Use visual cues when possible", "Avoid American idioms and indirect language"];
-
-                return React.createElement('div', { className: "max-w-4xl mx-auto p-4 sm:p-6 bg-white shadow-md rounded-lg" },
-                    React.createElement('div', { className: "mb-8 text-center" },
-                        React.createElement('h1', { className: "text-2xl sm:text-3xl font-bold text-gray-800 mb-2" }, 'Filipino Family Communication Adapter'),
-                        React.createElement('p', { className: "text-gray-600" }, 'Transform your messages for better understanding with your father')
-                    ),
-                    React.createElement('div', { className: "grid grid-cols-1 lg:grid-cols-3 gap-8" },
-                        React.createElement('div', { className: "lg:col-span-2" },
-                            React.createElement('div', { className: "mb-6" },
-                                React.createElement('label', { htmlFor: "message-input", className: "block text-sm font-medium text-gray-700 mb-2" }, 'Your Original Message:'),
-                                React.createElement('textarea', { id: "message-input", value: inputMessage, onChange: (e) => setInputMessage(e.target.value), placeholder: "Example: Can you please wait to clean the kitchen until I am done preparing my meals?", className: "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent", rows: 4 }),
-                                React.createElement('div', { className: "flex flex-wrap gap-4 mt-4" },
-                                    React.createElement('select', { value: selectedStyle, onChange: (e) => setSelectedStyle(e.target.value), className: "p-2 border border-gray-300 rounded-lg" },
-                                        React.createElement('option', { value: "all" }, 'All Styles'),
-                                        React.createElement('option', { value: "direct" }, 'Direct & Respectful'),
-                                        React.createElement('option', { value: "schedule" }, 'Schedule Format'),
-                                        React.createElement('option', { value: "simple" }, 'Simple Commands'),
-                                        React.createElement('option', { value: "whiteboard" }, 'Whiteboard Format')
-                                    ),
-                                    React.createElement('button', { onClick: handleSubmit, className: "px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors" }, 'Adapt Message')
-                                )
-                            ),
-                            adaptedMessages.length > 0 && React.createElement('div', { className: "space-y-4" },
-                                React.createElement('h2', { className: "text-xl font-semibold text-gray-800" }, 'Adapted Messages:'),
-                                adaptedMessages.map((adaptation, index) => React.createElement('div', { key: index, className: `p-4 rounded-lg border-2 ${adaptation.color}` },
-                                    React.createElement('div', { className: "flex items-center gap-2 mb-2" }, adaptation.icon, React.createElement('h3', { className: "font-semibold text-gray-800" }, adaptation.type)),
-                                    React.createElement('div', { className: "bg-white p-3 rounded border mb-3" }, React.createElement('pre', { className: "whitespace-pre-wrap font-sans text-sm" }, adaptation.message)),
-                                    React.createElement('div', { className: "text-sm text-gray-600" }, React.createElement('p', { className: "font-medium" }, adaptation.context), React.createElement('p', { className: "italic" }, adaptation.timing))
-                                ))
-                            )
-                        ),
-                        React.createElement('div', { className: "space-y-6" },
-                            React.createElement('div', { className: "bg-yellow-50 border border-yellow-200 rounded-lg p-4" },
-                                React.createElement('div', { className: "flex items-center gap-2 mb-3" }, lucide.createElement(lucide.Lightbulb, { className: "w-5 h-5 text-yellow-600" }), React.createElement('h3', { className: "font-semibold text-yellow-800" }, 'Cultural Communication Tips')),
-                                React.createElement('ul', { className: "space-y-2 text-sm text-yellow-700 list-disc list-inside" }, culturalTips.map((tip, index) => React.createElement('li', { key: index }, tip)))
-                            ),
-                            React.createElement('div', { className: "bg-green-50 border border-green-200 rounded-lg p-4" },
-                                React.createElement('h3', { className: "font-semibold text-green-800 mb-3" }, 'Best Communication Times'),
-                                React.createElement('div', { className: "space-y-2 text-sm text-green-700" },
-                                    React.createElement('div', null, React.createElement('strong', null, 'Morning (8-10 AM):'), ' Planning, schedules'),
-                                    React.createElement('div', null, React.createElement('strong', null, 'After meals:'), ' Requests, changes'),
-                                    React.createElement('div', null, React.createElement('strong', null, 'Calm moments:'), ' Complex topics'),
-                                    React.createElement('div', null, React.createElement('strong', null, 'Avoid:'), ' When he\'s focused on routines')
-                                )
-                            ),
-                            React.createElement('div', { className: "bg-blue-50 border border-blue-200 rounded-lg p-4" },
-                                React.createElement('h3', { className: "font-semibold text-blue-800 mb-3" }, 'Visual Presentation Tips'),
-                                React.createElement('ul', { className: "space-y-1 text-sm text-blue-700 list-disc list-inside" },
-                                    React.createElement('li', null, 'Use large, clear writing'), React.createElement('li', null, 'Leave whiteboard messages up'), React.createElement('li', null, 'Use simple drawings/icons'), React.createElement('li', null, 'Highlight key words'), React.createElement('li', null, 'Number steps clearly')
-                                )
-                            )
-                        )
-                    )
-                );
+                // An array of all possible adaptations
+                return [
+                    { type: 'Direct & Respectful', icon: 'message-square', color: 'border-purple-400', message: convertToDirectRespectful(message), context: 'Best for: Daily requests, routine changes', timing: 'Good timing: After meals, calm moments' },
+                    { type: 'Visual Schedule Format', icon: 'clock', color: 'border-sky-400', message: convertToScheduleFormat(message), context: 'Best for: Time-based requests, planning', timing: 'Good timing: Morning planning, evening prep' },
+                    { type: 'Simple Commands', icon: 'eye', color: 'border-green-400', message: convertToSimpleCommands(message), context: 'Best for: Immediate actions, safety', timing: 'Good timing: When attention is focused' },
+                    { type: 'Whiteboard Format', icon: 'file-text', color: 'border-orange-400', message: convertToWhiteboardFormat(message), context: 'Best for: Complex instructions, reminders', timing: 'Good timing: Leave up for reference' }
+                ];
             };
-            const container = document.getElementById('root');
-            const root = ReactDOM.createRoot(container);
-            root.render(React.createElement(CommunicationTool));
-        });
+            
+            // This function is called when the user clicks the "Adapt" button
+            const handleSubmit = () => {
+                setAdaptedMessages(adaptMessage(inputMessage));
+            };
+
+            const culturalTips = ["Use 'Tatay' to show respect and get attention", "Add 'po' for politeness in requests", "End with 'Salamat po' to show gratitude", "Be specific about times rather than vague", "Break complex requests into simple steps", "Use visual cues when possible", "Avoid American idioms and indirect language"];
+
+            // 3. IMPROVED: This is modern JSX, which is much easier to read than React.createElement()
+            return (
+                <div className="min-h-screen text-white font-sans p-4 sm:p-8 flex justify-center items-start">
+                    <div className="w-full max-w-5xl mx-auto">
+                        <div className="mb-8 text-center">
+                            <h1 className="text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 mb-2">Filipino Communication Tool</h1>
+                            <p className="text-slate-400">Adapt your messages for clear and respectful communication.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-2 space-y-6">
+                                <div className="bg-slate-800 p-6 rounded-xl shadow-2xl">
+                                    <label htmlFor="message-input" className="block text-lg font-semibold text-slate-300 mb-2">Your Original Message:</label>
+                                    <textarea id="message-input" value={inputMessage} onChange={(e) => setInputMessage(e.target.value)} placeholder="e.g., Can you please wait to clean the kitchen until I am done preparing my meals for the week?" className="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none text-slate-100 placeholder-slate-400" rows="4"></textarea>
+                                    
+                                    <div className="flex items-center gap-4 mt-4">
+                                        <button onClick={handleSubmit} className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-lg hover:from-purple-600 hover:to-pink-600 shadow-md hover:shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105">Adapt Message</button>
+                                    </div>
+                                </div>
+
+                                {adaptedMessages.length > 0 && (
+                                    <div className="space-y-4">
+                                        <h2 className="text-2xl font-semibold text-slate-200">Adapted Messages:</h2>
+                                        {adaptedMessages.map((adaptation, index) => (
+                                            <div key={index} className={`bg-slate-800 p-4 rounded-xl border-l-4 ${adaptation.color}`}>
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <i data-lucide={adaptation.icon} className="w-5 h-5"></i>
+                                                    <h3 className="font-semibold text-slate-100 text-lg">{adaptation.type}</h3>
+                                                </div>
+                                                <div className="bg-slate-900 p-3 rounded mb-3">
+                                                    <pre className="whitespace-pre-wrap font-mono text-sm text-slate-200">{adaptation.message}</pre>
+                                                </div>
+                                                <div className="text-sm text-slate-400">
+                                                    <p><strong className="font-medium text-slate-300">Best for:</strong> {adaptation.context}</p>
+                                                    <p><strong className="font-medium text-slate-300">Timing:</strong> {adaptation.timing}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="space-y-6">
+                                <div className="bg-slate-800 p-4 rounded-xl border-l-4 border-yellow-400">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <i data-lucide="lightbulb" className="w-5 h-5 text-yellow-400"></i>
+                                        <h3 className="font-semibold text-yellow-300">Cultural Communication Tips</h3>
+                                    </div>
+                                    <ul className="space-y-2 text-sm text-slate-300 list-disc list-inside">
+                                        {culturalTips.map((tip, index) => <li key={index}>{tip}</li>)}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // This is where React connects to your HTML
+        const container = document.getElementById('root');
+        const root = ReactDOM.createRoot(container);
+        root.render(<App />);
+
     </script>
 </body>
 </html>
